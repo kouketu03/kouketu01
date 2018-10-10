@@ -5,7 +5,7 @@ class Mysql:
 	DB_HOST = 'localhost'
 	DB_USER = 'fuhyou'
 	DB_PW = 'women637'
-	DB_NAME = 'fuhyou'
+	DB_NAME = 'fuhyou_produciton'
 
 	def connect_db(self):
 		db = pymysql.connect(self.DB_HOST,self.DB_USER,self.DB_PW,self.DB_NAME,charset='utf8' )
@@ -33,7 +33,7 @@ class Mysql:
 		cursor = conn.cursor()
 		
 		for sentence in sentences:
-			malist=ja_tokenizer.tokenize(sentence)
+			malist=ja_tokenizer.tokenize(sentence[0])
 			word_arr=[]
 			for tok in malist:
 				ps=tok.part_of_speech.split(",")[0]
@@ -47,12 +47,12 @@ class Mysql:
 			words = '';
 			for word in word_arr:
 				words += word + ','
-			sql = 'INSERT INTO sentences( sentence, words, word_num, cat ) values("%s", "%s", "%d", "%d")' % \
-			(pymysql.escape_string(sentence), pymysql.escape_string(words), word_num, cat)
+			sql = 'INSERT INTO sentences( sentence,company_id , words, word_num, cat ) values("%s", "%s", "%d", "%d")' % \
+			(pymysql.escape_string(sentence[0]),int(sentence[1]), pymysql.escape_string(words), word_num, cat)
 			cursor.execute(sql)
 			conn.commit()
 
-	def insert_into_db(self,sentence,cat):
+	def insert_into_db(self,sentence,company_id,cat):
 		ja_tokenizer=Tokenizer()
 		conn = self.connect_db()
 		cursor = conn.cursor()
@@ -69,16 +69,16 @@ class Mysql:
 		words = '';
 		for word in word_arr:
 			words += word + ','
-		sql = 'INSERT INTO sentences( sentence, words, word_num, cat ) values("%s", "%s", "%d", "%d")' % \
-		(pymysql.escape_string(sentence), pymysql.escape_string(words), word_num, cat)
+		sql = 'INSERT INTO sentences( sentence,company_id , words, word_num, cat ) values("%s", "%s", "%d", "%d")' % \
+		(pymysql.escape_string(sentence),int(company_id),  pymysql.escape_string(words), word_num, cat)
 		cursor.execute(sql)
-		conn.commit()		
+		conn.commit()	
 
-	def get_word_in_cat(self,word,category):
+	def get_word_in_cat(self,word,category, company_id):
 		conn = self.connect_db()
 		cursor = conn.cursor()
-		sql = 'SELECT words FROM sentences WHERE cat = %d' % \
-		(category)
+		sql = 'SELECT words FROM sentences WHERE cat = %d AND company_id = %d' % \
+		(category,int(company_id))
 		cursor.execute(sql)
 		words_arr = cursor.fetchall()
 		words_arr02 = []
@@ -95,10 +95,11 @@ class Mysql:
 		word_count_in_cat = words.count(word)
 		return word_count_in_cat
 
-	def get_vocabularise(self):
+	def get_vocabularise(self, company_id):
 		conn = self.connect_db()
 		cursor = conn.cursor()
-		sql = 'SELECT words FROM sentences'
+		sql = 'SELECT words FROM sentences WHERE company_id = %d' % \
+		(int(company_id))
 		cursor.execute(sql)
 		words_arr = cursor.fetchall()
 		words_arr02 = []
@@ -114,11 +115,11 @@ class Mysql:
 			words.append(o)
 		return words
 
-	def get_words_in_cat(self,category):
+	def get_words_in_cat(self,category, company_id):
 		conn = self.connect_db()
 		cursor = conn.cursor()
-		sql = 'SELECT words FROM sentences WHERE cat = %d' % \
-		(category)
+		sql = 'SELECT words FROM sentences WHERE cat = %d AND company_id = %d' % \
+		(category,int(company_id))
 		cursor.execute(sql)
 		words_arr = cursor.fetchall()
 		words_arr02 = []
@@ -134,28 +135,30 @@ class Mysql:
 			words.append(o)
 		return words
 
-	def get_all_cats_count(self):
+	def get_all_cats_count(self, company_id):
 		conn = self.connect_db()
 		cursor = conn.cursor()
-		sql = 'SELECT COUNT( cat ) FROM sentences WHERE cat != 0'
+		sql = 'SELECT COUNT( cat ) FROM sentences WHERE cat != 0 AND company_id = %d' % \
+		(int(company_id))
 		cursor.execute(sql)
 		all_cats_count = cursor.fetchone()
 
 		return all_cats_count[0]
 
-	def get_cat_count(self, category):
+	def get_cat_count(self, category, company_id):
 		conn = self.connect_db()
 		cursor = conn.cursor()
-		sql = 'SELECT COUNT( cat ) FROM sentences WHERE cat = %d' % \
-		(category)
+		sql = 'SELECT COUNT( cat ) FROM sentences WHERE cat = %d AND company_id = %d' % \
+		(category,int(company_id))
 		cursor.execute(sql)
 		cat_count = cursor.fetchone()
 		return cat_count[0]
 
-	def get_word_count(self,word):
+	def get_word_count(self,word, company_id):
 		conn = self.connect_db()
 		cursor = conn.cursor()
-		sql = 'SELECT words FROM sentences'
+		sql = 'SELECT words FROM sentences WHERE company_id = %d' % \
+		(int(company_id))
 		cursor.execute(sql)
 		words_arr = cursor.fetchall()
 		words_arr02 = []
@@ -172,10 +175,11 @@ class Mysql:
 		word_count = words.count(word)
 		return word_count
 
-	def check_history_word(self,word):
+	def check_history_word(self,word, company_id):
 		conn = self.connect_db()
 		cursor = conn.cursor()
-		sql = 'SELECT cat FROM history_words WHERE words = "%s"' % \
+		sql = 'SELECT cat FROM history_words WHERE words = "%s" AND company_id = %d' % \
+		(word,int(company_id))
 		(word)
 		cursor.execute(sql)
 		cat_count = cursor.fetchone()
@@ -184,7 +188,7 @@ class Mysql:
 		if cat_count != None:
 			return cat_count[0]
 
-	def insert_word_to_hisotory_table(self,word,cat):
+	def insert_word_to_hisotory_table(self,word,company_id,cat):
 		cat_no = 0
 		if cat == 'possitive':
 			cat_no += 1
@@ -192,7 +196,7 @@ class Mysql:
 			cat_no += 2
 		conn = self.connect_db()
 		cursor = conn.cursor()
-		sql = 'INSERT INTO history_words (words, cat) VALUES ( "%s", %d)' % \
-		(word,cat_no)
+		sql = 'INSERT INTO history_words (words,company_id , cat) VALUES ( "%s", %d, %d)' % \
+		(pymysql.escape_string(word),int(company_id),cat_no)
 		cursor.execute(sql)
 		conn.commit()

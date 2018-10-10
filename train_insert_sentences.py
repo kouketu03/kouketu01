@@ -1,15 +1,23 @@
-from dicmysql import Mysql
-from classify import NaiveBayes
+# coding:utf-8 
+import io  
+import sys
 import csv
 import requests
 from urllib.request import urlopen
 import urllib
 from bs4 import BeautifulSoup
+from janome.tokenizer import Tokenizer
+from dicmysql import Mysql
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='utf8') #改变标准输出的默认编码
+
 search = []
+
 with open('train_words.csv','r') as f:
 	reader = csv.reader(f)
 	for row in reader:
-		search.append(row)
+		search.append(x)
+print(search)
+#キーワードの検索結果をスクレイピング
 def get_sentence(search):
 	x = []
 	for a in search:
@@ -27,9 +35,8 @@ def get_sentence(search):
 			z.append([dicription.get_text(),y[1]])
 	return z
 
+print('Insert the words into database')
 sentences = get_sentence(search)
-print(sentences)
-
-#document = 'パワハラ'
-#Mysql = NaiveBayes()
-#words = Mysql.word_in_cat_probability(document,1)
+db = Mysql()
+db.fuhyou_insert_sentence(sentences)
+print('Insert finished')

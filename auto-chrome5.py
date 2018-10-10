@@ -14,8 +14,8 @@ d['loggingPrefs'] = { 'browser':'ALL' }
 classify = NaiveBayes()
 Mysql = Mysql()
 
-def auto_Firefox():
-	driver = webdriver.Firefox()
+def auto_chrome():
+	driver = webdriver.Chrome(r"C:\Users\kou-k\AppData\Local\driver\chromedriver.exe",desired_capabilities=d)
 	driver.get("https://www.google.co.jp/")
 	with open('keywords.csv','r') as f:
 		reader = csv.reader(f)
@@ -23,14 +23,15 @@ def auto_Firefox():
 			driver.find_element_by_id("lst-ib").clear() 
 			driver.find_element_by_id("lst-ib").send_keys(row[0])
 			driver.find_element_by_id("lst-ib").send_keys(Keys.ENTER)
-			driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-			related_words = driver.find_elements_by_class_name("nVcaUb")
+			time.sleep(2)
+			driver.find_element_by_id("lst-ib").click()	
+			related_words = driver.find_elements_by_class_name("sbqs_c")
 			i = -1
 			for related_word in related_words:
 				i +=1
 				#ページはjsにリフレッシュされたため、もう一回要素取得しないといけない。
 				#参考：https://www.cnblogs.com/fengpingfan/p/4583325.html
-				related_words02 = driver.find_elements_by_class_name("nVcaUb")
+				related_words02 = driver.find_elements_by_class_name("sbqs_c")
 				rel_word = related_words02[i].text
 				check = Mysql.check_history_word(rel_word,row[1])
 				print( rel_word + ':' + str(check))
@@ -46,9 +47,9 @@ def auto_Firefox():
 					driver.back()
 			time.sleep(1)
 	driver.quit()
-	t=threading.Timer(1,auto_Firefox)
+	t=threading.Timer(1,auto_chrome)
 	t.start()
 
 if __name__=='__main__':
-    t=threading.Thread(target=auto_Firefox)
+    t=threading.Thread(target=auto_chrome)
     t.start()

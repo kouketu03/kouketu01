@@ -14,8 +14,8 @@ d['loggingPrefs'] = { 'browser':'ALL' }
 classify = NaiveBayes()
 Mysql = Mysql()
 
-def auto_Firefox():
-	driver = webdriver.Firefox()
+def auto_chrome():
+	driver = webdriver.Chrome(r"C:\Users\kou-k\AppData\Local\driver\chromedriver.exe",desired_capabilities=d)
 	driver.get("https://www.google.co.jp/")
 	with open('keywords.csv','r') as f:
 		reader = csv.reader(f)
@@ -46,9 +46,9 @@ def auto_Firefox():
 					driver.back()
 			time.sleep(1)
 	driver.quit()
-	t=threading.Timer(1,auto_Firefox)
+	t=threading.Timer(1,auto_chrome)
 	t.start()
 
 if __name__=='__main__':
-    t=threading.Thread(target=auto_Firefox)
+    t=threading.Thread(target=auto_chrome)
     t.start()

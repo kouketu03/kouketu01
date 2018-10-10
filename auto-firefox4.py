@@ -17,24 +17,29 @@ Mysql = Mysql()
 def auto_Firefox():
 	driver = webdriver.Firefox()
 	driver.get("https://www.google.co.jp/")
-	with open('keywords.csv','r') as f:
+	with open('positive-keywords.csv','r') as f:
 		reader = csv.reader(f)
 		for row in reader:
 			driver.find_element_by_id("lst-ib").clear() 
 			driver.find_element_by_id("lst-ib").send_keys(row[0])
-			driver.find_element_by_id("lst-ib").send_keys(Keys.ENTER)
-			driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-			related_words = driver.find_elements_by_class_name("nVcaUb")
+			time.sleep(1)
+			driver.find_element_by_id("lst-ib").click()
+			related_words = driver.find_elements_by_class_name("sbqs_c")
 			i = -1
 			for related_word in related_words:
 				i +=1
 				#ページはjsにリフレッシュされたため、もう一回要素取得しないといけない。
 				#参考：https://www.cnblogs.com/fengpingfan/p/4583325.html
-				related_words02 = driver.find_elements_by_class_name("nVcaUb")
+				if i > 0:
+					driver.find_element_by_id("lst-ib").clear()
+					driver.find_element_by_id("lst-ib").send_keys(row[0])
+					time.sleep(1)
+					driver.find_element_by_id("lst-ib").click()
+				related_words02 = driver.find_elements_by_class_name("sbqs_c")
 				rel_word = related_words02[i].text
 				check = Mysql.check_history_word(rel_word,row[1])
 				print( rel_word + ':' + str(check))
-				if check == 'nothing' :
+				if check == 'nothing' and related_word != '':
 					cat = classify.word_classify(rel_word,row[1])
 					Mysql.insert_word_to_hisotory_table(rel_word,,row[1],cat)
 				if check == 2 : continue
@@ -44,6 +49,8 @@ def auto_Firefox():
 					time.sleep(2)
 					#前のページに戻らないと今のページ内の関連ワードをクリック続けるようになってしまいます。
 					driver.back()
+					print( 'back')
+					time.sleep(2)
 			time.sleep(1)
 	driver.quit()
 	t=threading.Timer(1,auto_Firefox)
